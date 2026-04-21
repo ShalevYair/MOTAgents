@@ -1,0 +1,659 @@
+<!DOCTYPE html>
+<html dir="rtl" lang="he">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>מחזור חיי תכנה – סוכני AI</title>
+    <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/echarts/5.4.3/echarts.min.js"></script>
+    <style>
+        :root {
+            --primary: #60a5fa;
+            --primary-dark: #93bbfd;
+            --secondary: #38bdf8;
+            --agent-color: #34d399;
+            --bg-color: #0f172a;
+            --panel-bg: #1e293b;
+            --text-main: #e2e8f0;
+            --text-sub: #94a3b8;
+            --border-light: #334155;
+            --header-bg: rgba(30, 41, 59, 0.95);
+            --node-bg: #1e293b;
+            --node-shadow: rgba(0,0,0,0.3);
+            --line-color: #475569;
+            --base-font-size: 16px;
+        }
+
+        body.light-mode {
+            --primary: #2563eb;
+            --primary-dark: #1d4ed8;
+            --secondary: #0ea5e9;
+            --agent-color: #059669;
+            --bg-color: #f8fafc;
+            --panel-bg: #ffffff;
+            --text-main: #0f172a;
+            --text-sub: #475569;
+            --border-light: #e2e8f0;
+            --header-bg: rgba(255, 255, 255, 0.9);
+            --node-bg: #fff;
+            --node-shadow: rgba(0,0,0,0.08);
+            --line-color: #cbd5e1;
+        }
+
+        body {
+            font-family: 'Heebo', sans-serif;
+            margin: 0;
+            padding: 0;
+            background: var(--bg-color);
+            color: var(--text-main);
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            transition: background 0.3s;
+        }
+
+        .header {
+            padding: 15px 40px;
+            background: var(--header-bg);
+            backdrop-filter: blur(10px);
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 100;
+            border-bottom: 1px solid var(--border-light);
+            transition: background 0.3s, border-color 0.3s;
+        }
+
+        h1 {
+            margin: 0;
+            font-size: 1.6rem;
+            color: var(--primary);
+            font-weight: 800;
+            letter-spacing: -0.5px;
+        }
+
+        .main-wrapper {
+            display: flex;
+            flex: 1;
+            height: calc(100vh - 75px);
+            padding: 20px;
+            gap: 20px;
+            box-sizing: border-box;
+        }
+
+        #chart-area {
+            flex: 3;
+            background-color: var(--panel-bg);
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.04);
+            overflow: hidden;
+            position: relative;
+            border: 1px solid var(--border-light);
+            transition: background-color 0.3s, border-color 0.3s;
+        }
+
+        #info-panel {
+            flex: 1;
+            min-width: 320px;
+            max-width: 400px;
+            background-color: var(--panel-bg);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.04);
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            border: 1px solid var(--border-light);
+            position: relative;
+            transition: background-color 0.3s, border-color 0.3s;
+        }
+
+        .header-controls {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .zoom-controls {
+            display: flex;
+            gap: 5px;
+            background: var(--panel-bg);
+            padding: 4px;
+            border-radius: 50px;
+            border: 1px solid var(--border-light);
+            transition: background 0.3s, border-color 0.3s;
+        }
+
+        .ctrl-btn {
+            background: var(--bg-color);
+            border: none;
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 1.1rem;
+            font-weight: bold;
+            color: var(--text-main);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            transition: all 0.2s;
+        }
+
+        .ctrl-btn:hover {
+            background: var(--primary);
+            color: white;
+        }
+
+        .dark-mode-btn {
+            background: var(--panel-bg);
+            border: 1px solid var(--border-light);
+            width: 34px;
+            height: 34px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 1.1rem;
+            color: var(--text-main);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+
+        .dark-mode-btn:hover {
+            background: var(--primary);
+            color: white;
+        }
+
+        .panel-title {
+            margin: 0 0 20px 0;
+            font-size: calc(var(--base-font-size) + 6px);
+            color: var(--primary-dark);
+            font-weight: 800;
+            padding-bottom: 15px;
+            border-bottom: 2px solid var(--border-light);
+            transition: font-size 0.3s ease;
+        }
+
+        .info-section {
+            margin-bottom: 25px;
+        }
+
+        .info-label {
+            font-weight: 700;
+            color: var(--secondary);
+            font-size: calc(var(--base-font-size) - 2px);
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            transition: font-size 0.3s ease;
+        }
+
+        .dynamic-text {
+            font-size: var(--base-font-size);
+            line-height: 1.7;
+            color: var(--text-sub);
+            transition: font-size 0.3s ease;
+        }
+
+        .actors-list,
+        .agents-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .actor-tag {
+            background: var(--border-light);
+            color: var(--secondary);
+            padding: 6px 14px;
+            border-radius: 50px;
+            font-size: calc(var(--base-font-size) - 3px);
+            font-weight: 600;
+            border: 1px solid var(--border-light);
+            transition: font-size 0.3s ease;
+        }
+
+        body.light-mode .actor-tag {
+            background: linear-gradient(135deg, #eff6ff, #e0f2fe);
+            color: #0369a1;
+            border-color: #bae6fd;
+        }
+
+        .agent-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            background: rgba(52, 211, 153, 0.1);
+            color: var(--agent-color);
+            padding: 6px 14px;
+            border-radius: 50px;
+            font-size: calc(var(--base-font-size) - 3px);
+            font-weight: 700;
+            border: 1px solid rgba(52, 211, 153, 0.3);
+            cursor: pointer;
+            text-decoration: none;
+            transition: all 0.2s ease, font-size 0.3s ease;
+        }
+
+        .agent-tag:hover {
+            background: rgba(52, 211, 153, 0.25);
+            transform: translateY(-1px);
+            box-shadow: 0 3px 8px rgba(52, 211, 153, 0.2);
+        }
+
+        .agent-tag-plain {
+            cursor: default;
+            opacity: 0.7;
+        }
+
+        .agent-tag-plain:hover {
+            transform: none;
+            box-shadow: none;
+        }
+
+        body.light-mode .agent-tag {
+            background: #d1fae5;
+            color: #065f46;
+            border-color: #6ee7b7;
+        }
+
+        body.light-mode .agent-tag:hover {
+            background: #a7f3d0;
+        }
+
+        #empty-state {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            color: var(--text-sub);
+        }
+
+        #info-panel::-webkit-scrollbar { width: 6px; }
+        #info-panel::-webkit-scrollbar-track { background: transparent; }
+        #info-panel::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        #info-panel::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+
+        .summary-paragraph {
+            margin-bottom: 16px;
+            text-align: justify;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <h1>מחזור חיי תכנה – סוכני AI</h1>
+        <div class="header-controls">
+            <div class="zoom-controls">
+                <button class="ctrl-btn" onclick="changeFontSize(1)" title="הגדל טקסט">+</button>
+                <button class="ctrl-btn" onclick="changeFontSize(-1)" title="הקטן טקסט">-</button>
+            </div>
+            <button class="dark-mode-btn" onclick="toggleDarkMode()" id="dark-mode-btn" title="מצב בהיר/כהה">&#9788;</button>
+        </div>
+    </div>
+
+    <div class="main-wrapper">
+        <div id="chart-area">
+            <div id="empty-state">
+                <div style="color: #94a3b8; margin-bottom: 15px; font-size: 3rem;">⏳</div>
+                <h2 style="font-weight: 300; margin: 10px 0;">טוען נתונים...</h2>
+                <p style="font-size: 1.1rem; opacity: 0.7;">אנא המתן בזמן שהנתונים נטענים</p>
+            </div>
+        </div>
+
+        <div id="info-panel">
+            <div id="info-default">
+                <h2 class="panel-title">סוכני SDLC</h2>
+                <div class="dynamic-text">
+                    <p class="summary-paragraph">
+                        <strong>מחזור חיי תכנה</strong> הוא התהליך המלא של פיתוח מערכת תוכנה — מהרגע שמזהים צורך עסקי ועד לתחזוקה השוטפת לאחר ה-Go-Live.
+                    </p>
+                    <p class="summary-paragraph">
+                        <strong>סוכני ה-AI</strong> הם עוזרים חכמים המלווים כל שלב במחזור החיים. כל סוכן מתמחה בתחום ספציפי: תכנון, אפיון, עיצוב, פיתוח, בדיקות, פריסה ותחזוקה.
+                    </p>
+                    <p class="summary-paragraph">
+                        <strong>שלבי ה-SDLC:</strong> Planning, Requirements Analysis, Design, Implementation, Testing, Deployment ו-Maintenance — כולם מיוצגים במפה עם הסוכנים והגורמים הרלוונטיים לכל תת-שלב.
+                    </p>
+                    <p class="summary-paragraph">
+                        <strong>כיצד להשתמש:</strong> לחץ על כל צומת במפה לצפות בפירוט השלב, הגורמים המעורבים וסוכני ה-AI הרלוונטיים. לחיצה על תגית סוכן תפתח את הסוכן ב-Gemini.
+                    </p>
+                    <p class="summary-paragraph" style="color: var(--primary); font-weight: 500; margin-top: 25px; text-align: center;">
+                        👆 לחץ על כל נקודה בתרשים כדי לצלול פנימה
+                    </p>
+                </div>
+            </div>
+
+            <div id="info-content-view" style="display: none;">
+                <h2 id="info-title" class="panel-title">שם השלב</h2>
+
+                <div class="info-section">
+                    <div class="info-label">גורמים מעורבים</div>
+                    <div id="info-actors" class="actors-list"></div>
+                </div>
+
+                <div class="info-section">
+                    <div class="info-label">פירוט התהליך</div>
+                    <div id="info-desc" class="dynamic-text"></div>
+                </div>
+
+                <div id="agents-section" class="info-section" style="display: none;">
+                    <div class="info-label">סוכני AI</div>
+                    <div id="info-agents" class="agents-list"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let myChart = null;
+
+        const AGENT_MAP = {
+            'ארזסטרטור':       { display: 'ארזסטרטור',        url: 'https://gemini.google.com/gem/1wrap8ggsEfWEFnU9m6EH7xbj0Wz5mxr8?usp=sharing' },
+            'סוכן PMO':        { display: 'רכזת הפרויקטים',   url: 'https://gemini.google.com/gem/1TiXnSihCx7aUOvIbMgGClCQLcVCHR7nD?usp=sharing' },
+            'סוכן Make or Buy':{ display: 'לעשות או לקנות',   url: 'https://gemini.google.com/gem/1Q1Mv-H2Df1XRTAxTGp3J0RjPbJRuIdnC?usp=sharing' },
+            'סוכן אפיון':      { display: 'מלך האפיונים',     url: 'https://gemini.google.com/gem/1Wk45NSaOWaYzMdYNRkFziZATwX_l9j2o?usp=sharing' },
+            'סוכן Design':     { display: 'מנתח המוח',        url: 'https://gemini.google.com/gem/1JgpJ9sdy1sczJgE1fFtYMb90URyQY8eT?usp=sharing' },
+            'סוכן UX/UI':      { display: 'מלכת העיצובים',   url: 'https://gemini.google.com/gem/1wuJgfOAb9ZKo3Cy9m2iYaKHCEn7_Y1yW?usp=sharing' },
+            'סוכן פיתוח':      { display: 'אלוף הפיתוחים',   url: 'https://gemini.google.com/gem/1qUYu2ycI4vFPcAWxgixU3Hc7vtxzt7_-?usp=sharing' },
+            'סוכן פלטפורמה':   { display: 'פלטפורמר',         url: 'https://gemini.google.com/gem/1hFvioNaOd28WWayWOjpXAzczeaicaM5c?usp=sharing' },
+            'סוכן בדיקות':     { display: 'הבודק',            url: 'https://gemini.google.com/gem/1koKgxS5PrmQRRPHuTk7Uro8BUOc8yI_N?usp=sharing' },
+            'סוכן Security':   { display: 'המאבטח',           url: 'https://gemini.google.com/gem/1SgIdzjrYiKL1qDs8LZna4WJOBintlRBZ?usp=sharing' },
+            'סוכן Deployment': { display: 'הפורס',            url: 'https://gemini.google.com/gem/1A4ubxJYigEb_uae1IJl73b52PT5yCYpm?usp=sharing' },
+            'סוכן Monitoring': { display: 'הצופה',            url: 'https://gemini.google.com/gem/1sfViXXZyyYPF0yjo5Q4dXp8OEkjFsgLX?usp=sharing' },
+            'סוכן דוקומנטציה': { display: 'המתעד',            url: 'https://gemini.google.com/gem/1s4nP3PEJKavBYYn_i2B3aCIj2w4xYikN?usp=sharing' },
+            'סוכן ספקים':      { display: 'מפעיל הספקים',    url: 'https://gemini.google.com/gem/1M_HZABG7nLvPtg_I7IQNXH2gOp02Vqu6?usp=sharing' }
+        };
+
+        let fontScale = 1;
+        const BASE_FONT_SIZES = { root: 18, stage: 15, subStage: 14, minor: 13 };
+
+        function changeFontSize(step) {
+            const root = document.documentElement;
+            let current = parseInt(getComputedStyle(root).getPropertyValue('--base-font-size'));
+            let next = current + (step * 2);
+            if (next >= 14 && next <= 28) {
+                root.style.setProperty('--base-font-size', next + 'px');
+                fontScale = next / 16;
+                updateChartFontSizes();
+            }
+        }
+
+        function updateChartFontSizes() {
+            if (!myChart) return;
+            const option = myChart.getOption();
+            if (!option || !option.series || !option.series[0]) return;
+
+            function walk(node) {
+                if (!node) return;
+                if (node.label) {
+                    if (node.label.fontWeight === '800') node.label.fontSize = Math.round(BASE_FONT_SIZES.root * fontScale);
+                    else if (node.label.fontWeight === '700') node.label.fontSize = Math.round(BASE_FONT_SIZES.stage * fontScale);
+                    else if (node.label.fontWeight === '500') node.label.fontSize = Math.round(BASE_FONT_SIZES.subStage * fontScale);
+                    else node.label.fontSize = Math.round(BASE_FONT_SIZES.minor * fontScale);
+                }
+                if (node.children) node.children.forEach(walk);
+            }
+
+            const seriesData = option.series[0].data;
+            if (seriesData && seriesData[0]) {
+                walk(seriesData[0]);
+                myChart.setOption({ series: [{ data: seriesData }] });
+            }
+        }
+
+        function toggleDarkMode() {
+            document.body.classList.toggle('light-mode');
+            const isLight = document.body.classList.contains('light-mode');
+            document.getElementById('dark-mode-btn').innerHTML = isLight ? '&#9790;' : '&#9788;';
+            updateChartTheme();
+        }
+
+        function updateChartTheme() {
+            if (!myChart) return;
+            const isLight = document.body.classList.contains('light-mode');
+            myChart.setOption({
+                tooltip: {
+                    backgroundColor: isLight ? 'rgba(255,255,255,0.95)' : 'rgba(30,41,59,0.95)',
+                    textStyle: { color: isLight ? '#0f172a' : '#e2e8f0' },
+                    borderColor: isLight ? '#e2e8f0' : '#475569'
+                },
+                series: [{
+                    label: {
+                        backgroundColor: isLight ? '#fff' : '#1e293b',
+                        shadowColor: isLight ? 'rgba(0,0,0,0.08)' : 'rgba(0,0,0,0.3)'
+                    },
+                    lineStyle: { color: isLight ? '#cbd5e1' : '#475569' }
+                }]
+            });
+
+            const option = myChart.getOption();
+            const seriesData = option.series[0].data;
+            if (seriesData && seriesData[0]) {
+                updateNodeColors(seriesData[0], isLight);
+                myChart.setOption({ series: [{ data: seriesData }] });
+            }
+        }
+
+        const COLOR_MAP = {
+            label:     { '#e2e8f0': '#0f172a', '#93bbfd': '#1d4ed8', '#7dd3fc': '#0369a1', '#94a3b8': '#475569' },
+            itemStyle: { '#e2e8f0': '#0f172a' }
+        };
+
+        function updateNodeColors(node, isLight) {
+            if (!node) return;
+            if (node.label && node.label.color) {
+                for (const [dark, light] of Object.entries(COLOR_MAP.label)) {
+                    if (node.label.color === dark || node.label.color === light) {
+                        node.label.color = isLight ? light : dark;
+                        break;
+                    }
+                }
+            }
+            if (node.itemStyle) {
+                for (const [dark, light] of Object.entries(COLOR_MAP.itemStyle)) {
+                    if (node.itemStyle.color === dark || node.itemStyle.color === light) {
+                        node.itemStyle.color = isLight ? light : dark;
+                        break;
+                    }
+                }
+            }
+            if (node.children) node.children.forEach(c => updateNodeColors(c, isLight));
+        }
+
+        const CSV_URL = 'https://raw.githubusercontent.com/ShalevYair/MOTAgents/main/SDLC.csv';
+
+        function loadCSV() {
+            fetch(CSV_URL)
+                .then(r => {
+                    if (!r.ok) throw new Error('שגיאה בטעינת הקובץ');
+                    return r.text();
+                })
+                .then(csvText => {
+                    Papa.parse(csvText, {
+                        header: true,
+                        skipEmptyLines: true,
+                        complete: function(results) {
+                            const treeData = buildTreeData(results.data);
+                            document.getElementById('empty-state').style.display = 'none';
+                            initChart(treeData);
+                        }
+                    });
+                })
+                .catch(err => {
+                    document.getElementById('empty-state').innerHTML = `
+                        <div style="color:#ef4444;margin-bottom:15px;font-size:3rem;">⚠</div>
+                        <h2 style="font-weight:300;margin:10px 0;">שגיאה בטעינת הנתונים</h2>
+                        <p style="font-size:1.1rem;opacity:0.7;">${err.message}</p>
+                    `;
+                });
+        }
+
+        document.addEventListener('DOMContentLoaded', loadCSV);
+
+        function buildTreeData(data) {
+            const root = {
+                name: 'מחזור חיים',
+                children: [],
+                symbolSize: 22,
+                itemStyle: { color: '#e2e8f0' },
+                label: { fontSize: 18, fontWeight: '800', color: '#e2e8f0' }
+            };
+
+            let currentStage = null;
+            let currentSubStage = null;
+
+            data.forEach(row => {
+                const type = (row.TYPE || '').trim().toUpperCase();
+                if (!type) return;
+
+                const node = {
+                    name:    row.TITLE   || 'ללא שם',
+                    content: row.CONTENT || '',
+                    actors:  row.ACTORS  || '',
+                    agent:   row.AGENT   || '',
+                    children: []
+                };
+
+                if (type === 'STAGE') {
+                    node.symbolSize  = 16;
+                    node.itemStyle   = { color: '#2563eb' };
+                    node.label       = { fontWeight: '700', fontSize: 15, color: '#93bbfd' };
+                    root.children.push(node);
+                    currentStage    = node;
+                    currentSubStage = null;
+                }
+                else if (type === 'SUBSTAGE') {
+                    node.symbolSize = 12;
+                    node.itemStyle  = { color: '#0ea5e9' };
+                    node.label      = { fontWeight: '500', fontSize: 14, color: '#7dd3fc' };
+                    if (currentStage) {
+                        currentStage.children.push(node);
+                        currentSubStage = node;
+                    } else {
+                        root.children.push(node);
+                    }
+                }
+                else if (type === 'MINORSTAGE') {
+                    node.symbolSize = 8;
+                    node.itemStyle  = { color: '#94a3b8' };
+                    node.label      = { fontSize: 13, color: '#94a3b8' };
+                    if (currentSubStage) {
+                        currentSubStage.children.push(node);
+                    } else if (currentStage) {
+                        currentStage.children.push(node);
+                    }
+                }
+            });
+
+            return root;
+        }
+
+        function initChart(data) {
+            const chartDom = document.getElementById('chart-area');
+            if (myChart) myChart.dispose();
+            myChart = echarts.init(chartDom);
+
+            myChart.setOption({
+                tooltip: {
+                    trigger: 'item',
+                    triggerOn: 'mousemove',
+                    formatter: '{b}',
+                    backgroundColor: 'rgba(30,41,59,0.95)',
+                    textStyle: { color: '#e2e8f0', fontFamily: 'Heebo' },
+                    borderColor: '#475569',
+                    borderWidth: 1,
+                    padding: [8, 12]
+                },
+                series: [{
+                    type: 'tree',
+                    data: [data],
+                    orient: 'RL',
+                    top: '8%',
+                    left: '20%',
+                    bottom: '8%',
+                    right: '15%',
+                    roam: true,
+                    label: {
+                        position: 'left',
+                        verticalAlign: 'middle',
+                        align: 'right',
+                        fontFamily: 'Heebo',
+                        padding: [5, 10],
+                        backgroundColor: '#1e293b',
+                        borderRadius: 6,
+                        shadowColor: 'rgba(0,0,0,0.3)',
+                        shadowBlur: 5,
+                        shadowOffsetY: 2
+                    },
+                    leaves: {
+                        label: {
+                            position: 'right',
+                            verticalAlign: 'middle',
+                            align: 'left'
+                        }
+                    },
+                    lineStyle: { color: '#475569', width: 2, curveness: 0.6 },
+                    expandAndCollapse: true,
+                    animationDuration: 550,
+                    initialTreeDepth: 2
+                }]
+            });
+
+            myChart.on('click', function(params) {
+                const d = params.data;
+                if (d.content || d.actors) {
+                    showPanel(d);
+                } else if (d.name === 'מחזור חיים') {
+                    hidePanel();
+                }
+            });
+
+            window.addEventListener('resize', () => myChart.resize());
+        }
+
+        function showPanel(d) {
+            document.getElementById('info-default').style.display = 'none';
+            document.getElementById('info-content-view').style.display = 'block';
+
+            document.getElementById('info-title').innerText = d.name;
+            document.getElementById('info-desc').innerText  = d.content || 'לא קיים פירוט נוסף לשלב זה.';
+
+            const actorsDiv = document.getElementById('info-actors');
+            if (d.actors) {
+                const list = d.actors.split(',').map(a => a.trim()).filter(Boolean);
+                actorsDiv.innerHTML = list.map(a => `<span class="actor-tag">${a}</span>`).join('');
+            } else {
+                actorsDiv.innerHTML = '<span style="color:var(--text-sub);font-size:0.9rem;">לא צוינו גורמים מעורבים</span>';
+            }
+
+            const agentsSection = document.getElementById('agents-section');
+            const agentsDiv     = document.getElementById('info-agents');
+            if (d.agent) {
+                agentsSection.style.display = 'block';
+                const names = d.agent.split(',').map(a => a.trim()).filter(Boolean);
+                agentsDiv.innerHTML = names.map(name => {
+                    const info = AGENT_MAP[name];
+                    if (info) {
+                        return `<a class="agent-tag" href="${info.url}" target="_blank" rel="noopener noreferrer">${info.display} ↗</a>`;
+                    }
+                    return `<span class="agent-tag agent-tag-plain">${name}</span>`;
+                }).join('');
+            } else {
+                agentsSection.style.display = 'none';
+            }
+        }
+
+        function hidePanel() {
+            document.getElementById('info-default').style.display = 'block';
+            document.getElementById('info-content-view').style.display = 'none';
+        }
+    </script>
+</body>
+</html>
