@@ -169,6 +169,27 @@
             color: white;
         }
 
+        .party-filter-select {
+            background: var(--panel-bg);
+            color: var(--text-main);
+            border: 1px solid var(--border-light);
+            border-radius: 50px;
+            padding: 4px 14px;
+            height: 36px;
+            font-family: 'Heebo', sans-serif;
+            font-size: 0.875rem;
+            cursor: pointer;
+            outline: none;
+            direction: rtl;
+            transition: background 0.3s, border-color 0.3s, color 0.3s;
+            max-width: 220px;
+        }
+
+        .party-filter-select:hover,
+        .party-filter-select:focus {
+            border-color: var(--primary);
+        }
+
         .panel-title {
             margin: 0 0 20px 0;
             font-size: calc(var(--base-font-size) + 6px);
@@ -291,6 +312,9 @@
     <div class="header">
         <h1>מחזור חיי תכנה – סוכני AI</h1>
         <div class="header-controls">
+            <select id="party-filter" class="party-filter-select" onchange="applyActorFilter(this.value)" title="סנן לפי גורם מעורב">
+                <option value="all">כל הגורמים המעורבים</option>
+            </select>
             <div class="zoom-controls">
                 <button class="ctrl-btn" onclick="changeFontSize(1)" title="הגדל טקסט">+</button>
                 <button class="ctrl-btn" onclick="changeFontSize(-1)" title="הקטן טקסט">-</button>
@@ -371,6 +395,7 @@
             'סוכן ספקים':      { display: 'מפעיל הספקים',    url: 'https://gemini.google.com/gem/1M_HZABG7nLvPtg_I7IQNXH2gOp02Vqu6?usp=sharing' }
         };
 
+        let allRows = null;
         let fontScale = 1;
         const BASE_FONT_SIZES = { root: 18, stage: 15, subStage: 14, minor: 13 };
 
@@ -480,7 +505,9 @@
                         header: true,
                         skipEmptyLines: true,
                         complete: function(results) {
-                            const treeData = buildTreeData(results.data);
+                            allRows = results.data;
+                            populateActorsDropdown(allRows);
+                            const treeData = buildTreeData(allRows);
                             document.getElementById('empty-state').style.display = 'none';
                             initChart(treeData);
                         }
@@ -496,6 +523,61 @@
         }
 
         document.addEventListener('DOMContentLoaded', loadCSV);
+
+        function populateActorsDropdown(data) {
+            const actorSet = new Set();
+            data.forEach(row => {
+                if (row.ACTORS) {
+                    row.ACTORS.split(',').map(a => a.trim()).filter(Boolean).forEach(a => actorSet.add(a));
+                }
+            });
+            const select = document.getElementById('party-filter');
+            Array.from(actorSet).sort().forEach(actor => {
+                const option = document.createElement('option');
+                option.value = actor;
+                option.textContent = actor;
+                select.appendChild(option);
+            });
+        }
+
+        function applyActorFilter(actor) {
+            if (!allRows || !myChart) return;
+            hidePanel();
+            if (actor === 'all') {
+                const treeData = buildTreeData(allRows);
+                myChart.setOption({ series: [{ data: [treeData], initialTreeDepth: 1 }] });
+            } else {
+                const treeData = buildFilteredTreeData(allRows, actor);
+                myChart.setOption({ series: [{ data: [treeData], initialTreeDepth: 2 }] });
+            }
+        }
+
+        function buildFilteredTreeData(data, actor) {
+            const full = buildTreeData(data);
+            return filterTreeNode(full, actor) || {
+                ...full,
+                children: [],
+                name: full.name
+            };
+        }
+
+        function nodeContainsActor(node, actor) {
+            if (!node.actors) return false;
+            return node.actors.split(',').map(a => a.trim()).some(a => a === actor);
+        }
+
+        function filterTreeNode(node, actor) {
+            if (!node.children || node.children.length === 0) {
+                return nodeContainsActor(node, actor) ? node : null;
+            }
+            const filteredChildren = node.children
+                .map(child => filterTreeNode(child, actor))
+                .filter(Boolean);
+            if (nodeContainsActor(node, actor) || filteredChildren.length > 0) {
+                return Object.assign({}, node, { children: filteredChildren });
+            }
+            return null;
+        }
 
         function buildTreeData(data) {
             const root = {
