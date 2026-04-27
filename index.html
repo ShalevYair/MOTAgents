@@ -305,6 +305,209 @@
             margin-bottom: 16px;
             text-align: justify;
         }
+
+        /* ===== CHAT ===== */
+        .chat-btn {
+            background: var(--panel-bg);
+            border: 1px solid var(--border-light);
+            border-radius: 50px;
+            padding: 0 16px;
+            height: 36px;
+            cursor: pointer;
+            font-family: 'Heebo', sans-serif;
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: var(--primary);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.2s;
+            white-space: nowrap;
+        }
+        .chat-btn:hover {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+        .chat-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.6);
+            z-index: 1000;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            backdrop-filter: blur(4px);
+        }
+        .chat-modal {
+            background: var(--panel-bg);
+            border-radius: 20px;
+            border: 1px solid var(--border-light);
+            width: min(680px, 92vw);
+            height: min(640px, 88vh);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            box-shadow: 0 25px 60px rgba(0,0,0,0.45);
+            transition: background 0.3s, border-color 0.3s;
+        }
+        .chat-modal-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 18px 24px;
+            border-bottom: 1px solid var(--border-light);
+            flex-shrink: 0;
+        }
+        .chat-modal-title {
+            font-size: 1.05rem;
+            font-weight: 700;
+            color: var(--primary-dark);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .chat-header-actions { display: flex; gap: 6px; align-items: center; }
+        .chat-icon-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: var(--text-sub);
+            font-size: 1rem;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            transition: all 0.2s;
+        }
+        .chat-icon-btn:hover { background: var(--border-light); color: var(--text-main); }
+        .chat-api-section {
+            padding: 14px 24px;
+            border-bottom: 1px solid var(--border-light);
+            background: rgba(96,165,250,0.06);
+            flex-shrink: 0;
+            display: none;
+        }
+        .chat-api-label {
+            font-size: 0.83rem;
+            color: var(--text-sub);
+            margin-bottom: 8px;
+        }
+        .chat-api-row { display: flex; gap: 8px; }
+        .chat-api-input {
+            flex: 1;
+            background: var(--bg-color);
+            border: 1px solid var(--border-light);
+            border-radius: 50px;
+            padding: 7px 16px;
+            font-family: 'Heebo', sans-serif;
+            font-size: 0.875rem;
+            color: var(--text-main);
+            outline: none;
+            direction: ltr;
+            transition: border-color 0.2s;
+        }
+        .chat-api-input:focus { border-color: var(--primary); }
+        .chat-api-btn {
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 50px;
+            padding: 7px 20px;
+            font-family: 'Heebo', sans-serif;
+            font-size: 0.875rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: opacity 0.2s;
+        }
+        .chat-api-btn:hover { opacity: 0.85; }
+        .chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .chat-messages::-webkit-scrollbar { width: 5px; }
+        .chat-messages::-webkit-scrollbar-track { background: transparent; }
+        .chat-messages::-webkit-scrollbar-thumb { background: var(--border-light); border-radius: 10px; }
+        .chat-message { display: flex; max-width: 82%; }
+        .chat-message-user  { align-self: flex-start; }
+        .chat-message-assistant, .chat-message-error { align-self: flex-end; }
+        .chat-bubble {
+            padding: 10px 16px;
+            border-radius: 18px;
+            font-size: 0.88rem;
+            line-height: 1.65;
+        }
+        .chat-message-user .chat-bubble {
+            background: var(--primary);
+            color: #fff;
+            border-top-right-radius: 4px;
+        }
+        .chat-message-assistant .chat-bubble {
+            background: var(--border-light);
+            color: var(--text-main);
+            border-top-left-radius: 4px;
+        }
+        .chat-message-error .chat-bubble {
+            background: rgba(239,68,68,0.12);
+            color: #ef4444;
+            font-size: 0.83rem;
+        }
+        .chat-typing { display: flex !important; align-items: center; gap: 5px; padding: 14px 16px !important; }
+        .chat-typing span {
+            width: 7px; height: 7px;
+            background: var(--text-sub);
+            border-radius: 50%;
+            animation: chatBounce 1.3s infinite;
+        }
+        .chat-typing span:nth-child(2) { animation-delay: 0.2s; }
+        .chat-typing span:nth-child(3) { animation-delay: 0.4s; }
+        @keyframes chatBounce {
+            0%, 60%, 100% { transform: translateY(0); opacity: 0.5; }
+            30% { transform: translateY(-7px); opacity: 1; }
+        }
+        .chat-input-area {
+            display: flex;
+            gap: 8px;
+            padding: 14px 24px;
+            border-top: 1px solid var(--border-light);
+            flex-shrink: 0;
+        }
+        .chat-text-input {
+            flex: 1;
+            background: var(--bg-color);
+            border: 1px solid var(--border-light);
+            border-radius: 50px;
+            padding: 9px 18px;
+            font-family: 'Heebo', sans-serif;
+            font-size: 0.9rem;
+            color: var(--text-main);
+            outline: none;
+            direction: rtl;
+            transition: border-color 0.2s;
+        }
+        .chat-text-input:focus { border-color: var(--primary); }
+        .chat-text-input::placeholder { color: var(--text-sub); }
+        .chat-send-btn {
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 50px;
+            padding: 9px 22px;
+            font-family: 'Heebo', sans-serif;
+            font-size: 0.9rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: opacity 0.2s;
+            white-space: nowrap;
+        }
+        .chat-send-btn:hover { opacity: 0.85; }
+        .chat-send-btn:disabled { opacity: 0.45; cursor: not-allowed; }
     </style>
 </head>
 <body>
@@ -312,6 +515,10 @@
     <div class="header">
         <h1>מחזור חיי תכנה – סוכני AI</h1>
         <div class="header-controls">
+            <button class="chat-btn" onclick="openChat()" title="שאל שאלה על מפת המחשבה">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                שאל
+            </button>
             <select id="party-filter" class="party-filter-select" onchange="applyActorFilter(this.value)" title="סנן לפי גורם מעורב">
                 <option value="all">כל הגורמים המעורבים</option>
             </select>
@@ -371,6 +578,41 @@
                     <div class="info-label">סוכני AI</div>
                     <div id="info-agents" class="agents-list"></div>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Chat Overlay -->
+    <div class="chat-overlay" id="chat-overlay" onclick="handleOverlayClick(event)">
+        <div class="chat-modal" onclick="event.stopPropagation()">
+            <div class="chat-modal-header">
+                <div class="chat-modal-title">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                    שאל על מפת המחשבה
+                </div>
+                <div class="chat-header-actions">
+                    <button class="chat-icon-btn" onclick="toggleApiKeySection()" title="שנה מפתח API">🔑</button>
+                    <button class="chat-icon-btn" onclick="closeChat()" title="סגור">&#x2715;</button>
+                </div>
+            </div>
+
+            <div class="chat-api-section" id="chat-api-section">
+                <div class="chat-api-label">🔑 הזן מפתח Gemini API (נשמר בדפדפן בלבד):</div>
+                <div class="chat-api-row">
+                    <input type="password" id="api-key-input" class="chat-api-input"
+                           placeholder="AIza..."
+                           onkeydown="if(event.key==='Enter') setApiKey()">
+                    <button class="chat-api-btn" onclick="setApiKey()">אישור</button>
+                </div>
+            </div>
+
+            <div class="chat-messages" id="chat-messages"></div>
+
+            <div class="chat-input-area">
+                <input type="text" id="chat-text-input" class="chat-text-input"
+                       placeholder="שאל שאלה על מפת המחשבה..."
+                       onkeydown="if(event.key==='Enter'&&!event.shiftKey) sendChatMessage()">
+                <button class="chat-send-btn" id="chat-send-btn" onclick="sendChatMessage()">שלח</button>
             </div>
         </div>
     </div>
@@ -736,6 +978,193 @@
             document.getElementById('info-default').style.display = 'block';
             document.getElementById('info-content-view').style.display = 'none';
         }
+
+        // ===== CHAT WITH GEMINI =====
+        let chatHistory = [];
+        let geminiApiKey = sessionStorage.getItem('gemini_api_key') || '';
+        let chatWelcomeShown = false;
+        let typingIdCounter = 0;
+        let mindmapContextCache = null;
+
+        function buildMindmapContext() {
+            if (mindmapContextCache) return mindmapContextCache;
+            if (!allRows) return 'הנתונים עדיין לא נטענו.';
+            let ctx = 'מבנה מפת המחשבה של SDLC (מחזור חיי תכנה) עם סוכני AI:\n\n';
+            allRows.forEach(row => {
+                const type = (row.TYPE || '').trim().toUpperCase();
+                if (!type) return;
+                const indent = type === 'STAGE' ? '' : type === 'SUBSTAGE' ? '  ' : '    ';
+                const prefix = type === 'STAGE' ? '## שלב' : type === 'SUBSTAGE' ? '### תת-שלב' : '#### פעילות';
+                ctx += `${indent}${prefix}: ${row.TITLE || ''}\n`;
+                if (row.ACTORS)  ctx += `${indent}גורמים מעורבים: ${row.ACTORS}\n`;
+                if (row.AGENT)   ctx += `${indent}סוכני AI: ${row.AGENT}\n`;
+                if (row.CONTENT) ctx += `${indent}תיאור: ${row.CONTENT}\n`;
+                ctx += '\n';
+            });
+            mindmapContextCache = ctx;
+            return ctx;
+        }
+
+        function openChat() {
+            document.getElementById('chat-overlay').style.display = 'flex';
+            if (geminiApiKey) {
+                document.getElementById('chat-api-section').style.display = 'none';
+                if (!chatWelcomeShown) {
+                    chatWelcomeShown = true;
+                    appendChatMessage('assistant', 'שלום! אני כאן לעזור לך לנווט במפת המחשבה של SDLC.\nתוכל לשאול אותי מי אחראי על כל שלב, מה עושים בכל תהליך, אילו סוכני AI קיימים, ועוד.\nבמה אוכל לעזור?');
+                }
+                setTimeout(() => document.getElementById('chat-text-input').focus(), 50);
+            } else {
+                document.getElementById('chat-api-section').style.display = 'block';
+                setTimeout(() => document.getElementById('api-key-input').focus(), 50);
+            }
+        }
+
+        function closeChat() {
+            document.getElementById('chat-overlay').style.display = 'none';
+        }
+
+        function handleOverlayClick(e) {
+            if (e.target === document.getElementById('chat-overlay')) closeChat();
+        }
+
+        function toggleApiKeySection() {
+            const section = document.getElementById('chat-api-section');
+            const isVisible = section.style.display === 'block';
+            section.style.display = isVisible ? 'none' : 'block';
+            if (!isVisible) {
+                document.getElementById('api-key-input').value = '';
+                setTimeout(() => document.getElementById('api-key-input').focus(), 50);
+            }
+        }
+
+        function setApiKey() {
+            const key = document.getElementById('api-key-input').value.trim();
+            if (!key) return;
+            geminiApiKey = key;
+            sessionStorage.setItem('gemini_api_key', key);
+            document.getElementById('chat-api-section').style.display = 'none';
+            if (!chatWelcomeShown) {
+                chatWelcomeShown = true;
+                appendChatMessage('assistant', 'שלום! אני כאן לעזור לך לנווט במפת המחשבה של SDLC.\nתוכל לשאול אותי מי אחראי על כל שלב, מה עושים בכל תהליך, אילו סוכני AI קיימים, ועוד.\nבמה אוכל לעזור?');
+            }
+            setTimeout(() => document.getElementById('chat-text-input').focus(), 50);
+        }
+
+        async function sendChatMessage() {
+            const input = document.getElementById('chat-text-input');
+            const text = input.value.trim();
+            if (!text) return;
+            if (!geminiApiKey) {
+                document.getElementById('chat-api-section').style.display = 'block';
+                document.getElementById('api-key-input').focus();
+                return;
+            }
+            input.value = '';
+            const sendBtn = document.getElementById('chat-send-btn');
+            sendBtn.disabled = true;
+            input.disabled = true;
+
+            appendChatMessage('user', text);
+            const typingId = appendTypingIndicator();
+
+            try {
+                const reply = await callGeminiChat(text);
+                removeTypingIndicator(typingId);
+                appendChatMessage('assistant', reply);
+            } catch (err) {
+                removeTypingIndicator(typingId);
+                if (/API_KEY|401|INVALID|API key/i.test(err.message)) {
+                    geminiApiKey = '';
+                    sessionStorage.removeItem('gemini_api_key');
+                    document.getElementById('chat-api-section').style.display = 'block';
+                    appendChatMessage('error', 'מפתח ה-API אינו תקף. אנא הזן מפתח חדש.');
+                } else {
+                    appendChatMessage('error', 'שגיאה: ' + err.message);
+                }
+            } finally {
+                sendBtn.disabled = false;
+                input.disabled = false;
+                input.focus();
+            }
+        }
+
+        async function callGeminiChat(userMessage) {
+            const contents = chatHistory.map(m => ({
+                role: m.role,
+                parts: [{ text: m.text }]
+            }));
+            contents.push({ role: 'user', parts: [{ text: userMessage }] });
+
+            const res = await fetch(
+                `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${geminiApiKey}`,
+                {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        system_instruction: {
+                            parts: [{ text: 'אתה עוזר חכם שמסייע למשתמשים להבין מפת מחשבה של SDLC (מחזור חיי תכנה עם סוכני AI). ענה תמיד בעברית בלבד. הנה מבנה המפה המלא:\n\n' + buildMindmapContext() }]
+                        },
+                        contents,
+                        generationConfig: { maxOutputTokens: 8192, temperature: 0.1 }
+                    })
+                }
+            );
+
+            if (!res.ok) {
+                const err = await res.json().catch(() => ({}));
+                throw new Error(err?.error?.message ?? `HTTP ${res.status}`);
+            }
+
+            const data = await res.json();
+            const reply = data.candidates[0].content.parts.map(p => p.text).join('');
+            chatHistory.push({ role: 'user', text: userMessage });
+            chatHistory.push({ role: 'model', text: reply });
+            return reply;
+        }
+
+        function appendChatMessage(role, text) {
+            const container = document.getElementById('chat-messages');
+            const wrapper = document.createElement('div');
+            wrapper.className = `chat-message chat-message-${role}`;
+            const bubble = document.createElement('div');
+            bubble.className = 'chat-bubble';
+            bubble.innerHTML = formatChatText(text);
+            wrapper.appendChild(bubble);
+            container.appendChild(wrapper);
+            container.scrollTop = container.scrollHeight;
+        }
+
+        function appendTypingIndicator() {
+            const id = 'typing-' + (++typingIdCounter);
+            const container = document.getElementById('chat-messages');
+            const wrapper = document.createElement('div');
+            wrapper.id = id;
+            wrapper.className = 'chat-message chat-message-assistant';
+            wrapper.innerHTML = '<div class="chat-bubble chat-typing"><span></span><span></span><span></span></div>';
+            container.appendChild(wrapper);
+            container.scrollTop = container.scrollHeight;
+            return id;
+        }
+
+        function removeTypingIndicator(id) {
+            const el = document.getElementById(id);
+            if (el) el.remove();
+        }
+
+        function formatChatText(text) {
+            return text
+                .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+                .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                .replace(/\*(.*?)\*/g, '<em>$1</em>')
+                .replace(/\n/g, '<br>');
+        }
+
+        document.addEventListener('keydown', e => {
+            if (e.key === 'Escape' && document.getElementById('chat-overlay').style.display === 'flex') {
+                closeChat();
+            }
+        });
     </script>
 </body>
 </html>
