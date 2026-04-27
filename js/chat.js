@@ -6,6 +6,7 @@ let mindmapContextCache = null;
 let chatFontPx = 14;
 let chatIsFullscreen = false;
 let lastFailedMessage = null;
+let retryCountdownTimer = null;
 
 const ICON_EXPAND =
     '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">' +
@@ -154,17 +155,55 @@ function handleChatError(err) {
         document.getElementById('chat-api-section').style.display = 'block';
         appendChatMessage('error', 'מפתח ה-API אינו תקף. אנא הזן מפתח חדש.');
     } else if (/high demand|overloaded|temporarily|503|429/i.test(err.message)) {
-        appendChatErrorWithRetry('המודל עמוס כרגע. המתן רגע ונסה שוב.');
+        startRetryCountdown();
     } else {
         appendChatMessage('error', 'שגיאה: ' + err.message);
     }
 }
 
+function startRetryCountdown() {
+    if (retryCountdownTimer) { clearInterval(retryCountdownTimer); retryCountdownTimer = null; }
+
+    const container = document.getElementById('chat-messages');
+    container.querySelectorAll('.chat-message-error').forEach(el => el.remove());
+
+    const wrapper = document.createElement('div');
+    wrapper.id = 'chat-retry-bubble';
+    wrapper.className = 'chat-message chat-message-error';
+    const bubble = document.createElement('div');
+    bubble.className = 'chat-bubble';
+    wrapper.appendChild(bubble);
+    container.appendChild(wrapper);
+    container.scrollTop = container.scrollHeight;
+
+    let secs = 5;
+    const render = () => {
+        bubble.innerHTML =
+            `⏳ המודל עמוס, מנסה שוב בעוד <strong>${secs}</strong> שניות...` +
+            '<br><button class="chat-retry-btn" onclick="retryNow()">נסה עכשיו ↺</button>';
+    };
+    render();
+
+    retryCountdownTimer = setInterval(() => {
+        secs--;
+        if (secs <= 0) {
+            clearInterval(retryCountdownTimer);
+            retryCountdownTimer = null;
+            retryChatMessage();
+        } else {
+            render();
+        }
+    }, 1000);
+}
+
+function retryNow() {
+    if (retryCountdownTimer) { clearInterval(retryCountdownTimer); retryCountdownTimer = null; }
+    retryChatMessage();
+}
+
 async function retryChatMessage() {
     if (!lastFailedMessage) return;
-    const container = document.getElementById('chat-messages');
-    const errors = container.querySelectorAll('.chat-message-error');
-    if (errors.length) errors[errors.length - 1].remove();
+    document.getElementById('chat-messages').querySelectorAll('.chat-message-error').forEach(el => el.remove());
 
     const sendBtn = document.getElementById('chat-send-btn');
     const input = document.getElementById('chat-text-input');
@@ -219,20 +258,6 @@ async function callGeminiChat(userMessage) {
 }
 
 // ── UI helpers ─────────────────────────────────────────────────────────────
-
-function appendChatErrorWithRetry(text) {
-    const container = document.getElementById('chat-messages');
-    const wrapper = document.createElement('div');
-    wrapper.className = 'chat-message chat-message-error';
-    const bubble = document.createElement('div');
-    bubble.className = 'chat-bubble';
-    bubble.innerHTML =
-        formatChatText(text) +
-        '<br><button class="chat-retry-btn" onclick="retryChatMessage()">נסה שוב ↺</button>';
-    wrapper.appendChild(bubble);
-    container.appendChild(wrapper);
-    container.scrollTop = container.scrollHeight;
-}
 
 function appendChatMessage(role, text) {
     const container = document.getElementById('chat-messages');
