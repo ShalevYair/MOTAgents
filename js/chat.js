@@ -5,6 +5,7 @@ let typingIdCounter = 0;
 let mindmapContextCache = null;
 let chatFontPx = 14;
 let chatIsFullscreen = false;
+let lastFailedMessage = null;
 
 const ICON_EXPAND =
     '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">' +
@@ -123,6 +124,7 @@ async function sendChatMessage() {
         return;
     }
     input.value = '';
+    lastFailedMessage = text;
     const sendBtn = document.getElementById('chat-send-btn');
     sendBtn.disabled = true;
     input.disabled = true;
@@ -134,16 +136,50 @@ async function sendChatMessage() {
         const reply = await callGeminiChat(text);
         removeTypingIndicator(typingId);
         appendChatMessage('assistant', reply);
+        lastFailedMessage = null;
     } catch (err) {
         removeTypingIndicator(typingId);
-        if (/API_KEY|401|INVALID|API key/i.test(err.message)) {
-            geminiApiKey = '';
-            sessionStorage.removeItem('gemini_api_key');
-            document.getElementById('chat-api-section').style.display = 'block';
-            appendChatMessage('error', 'מפתח ה-API אינו תקף. אנא הזן מפתח חדש.');
-        } else {
-            appendChatMessage('error', 'שגיאה: ' + err.message);
-        }
+        handleChatError(err);
+    } finally {
+        sendBtn.disabled = false;
+        input.disabled = false;
+        input.focus();
+    }
+}
+
+function handleChatError(err) {
+    if (/API_KEY|401|INVALID|API key/i.test(err.message)) {
+        geminiApiKey = '';
+        sessionStorage.removeItem('gemini_api_key');
+        document.getElementById('chat-api-section').style.display = 'block';
+        appendChatMessage('error', 'מפתח ה-API אינו תקף. אנא הזן מפתח חדש.');
+    } else if (/high demand|overloaded|temporarily|503|429/i.test(err.message)) {
+        appendChatErrorWithRetry('המודל עמוס כרגע. המתן רגע ונסה שוב.');
+    } else {
+        appendChatMessage('error', 'שגיאה: ' + err.message);
+    }
+}
+
+async function retryChatMessage() {
+    if (!lastFailedMessage) return;
+    const container = document.getElementById('chat-messages');
+    const errors = container.querySelectorAll('.chat-message-error');
+    if (errors.length) errors[errors.length - 1].remove();
+
+    const sendBtn = document.getElementById('chat-send-btn');
+    const input = document.getElementById('chat-text-input');
+    sendBtn.disabled = true;
+    input.disabled = true;
+    const typingId = appendTypingIndicator();
+
+    try {
+        const reply = await callGeminiChat(lastFailedMessage);
+        removeTypingIndicator(typingId);
+        appendChatMessage('assistant', reply);
+        lastFailedMessage = null;
+    } catch (err) {
+        removeTypingIndicator(typingId);
+        handleChatError(err);
     } finally {
         sendBtn.disabled = false;
         input.disabled = false;
@@ -183,6 +219,20 @@ async function callGeminiChat(userMessage) {
 }
 
 // ── UI helpers ─────────────────────────────────────────────────────────────
+
+function appendChatErrorWithRetry(text) {
+    const container = document.getElementById('chat-messages');
+    const wrapper = document.createElement('div');
+    wrapper.className = 'chat-message chat-message-error';
+    const bubble = document.createElement('div');
+    bubble.className = 'chat-bubble';
+    bubble.innerHTML =
+        formatChatText(text) +
+        '<br><button class="chat-retry-btn" onclick="retryChatMessage()">נסה שוב ↺</button>';
+    wrapper.appendChild(bubble);
+    container.appendChild(wrapper);
+    container.scrollTop = container.scrollHeight;
+}
 
 function appendChatMessage(role, text) {
     const container = document.getElementById('chat-messages');
