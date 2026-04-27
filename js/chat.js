@@ -176,7 +176,7 @@ function startRetryCountdown() {
     container.appendChild(wrapper);
     container.scrollTop = container.scrollHeight;
 
-    let secs = 5;
+    let secs = 15;
     const render = () => {
         bubble.innerHTML =
             `⏳ המודל עמוס, מנסה שוב בעוד <strong>${secs}</strong> שניות...` +
